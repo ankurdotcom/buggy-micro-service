@@ -1,0 +1,27 @@
+@RestController
+@RequestMapping("/users")
+public class UserController {
+
+    @Autowired
+    private UserService userService;
+
+    @GetMapping("/{id}")
+    public User getUserById(@PathVariable Long id) {
+        return userService.getUserById(id);
+    }
+}
+
+@Service
+public class UserService {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    public User getUserById(Long id) {
+        return userRepository.findById(id).get();
+    }
+}
+
+@Repository
+public interface UserRepository extends JpaRepository<User, Long> {
+}
