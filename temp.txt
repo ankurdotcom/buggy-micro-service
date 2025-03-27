@@ -25,3 +25,179 @@ public class UserService {
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 }
+
+
+/////////////////
+
+1. Backend Problem-Solving & Code Review (20 min)
+Java Code Review & Debugging Task
+Question:
+"Here is a simple Spring Boot microservice that exposes an API to fetch user details. Can you identify any issues and suggest improvements?"
+
+java
+Copy
+Edit
+@RestController
+@RequestMapping("/users")
+public class UserController {
+
+    @Autowired
+    private UserService userService;
+
+    @GetMapping("/{id}")
+    public User getUserById(@PathVariable Long id) {
+        return userService.getUserById(id);
+    }
+}
+
+@Service
+public class UserService {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    public User getUserById(Long id) {
+        return userRepository.findById(id).get();
+    }
+}
+
+@Repository
+public interface UserRepository extends JpaRepository<User, Long> {
+}
+Expected Answer:
+✅ Problem: Exception Handling
+
+getUserById(id).get() will throw NoSuchElementException if the user is not found.
+✅ Fix: Use Optional to handle missing users properly.
+
+✅ Problem: Autowiring Field Injection
+
+@Autowired at field level is not recommended. Constructor injection is better for testability.
+✅ Fix: Use constructor injection.
+
+✅ Problem: Missing Logging & Response Handling
+
+No logs for errors, and no proper API response for failures.
+✅ Fix: Use ResponseEntity<> for better API responses.
+
+Improved Code
+java
+Copy
+Edit
+@RestController
+@RequestMapping("/users")
+public class UserController {
+
+    private final UserService userService;
+
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<User> getUserById(@PathVariable Long id) {
+        return userService.getUserById(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+    }
+}
+
+@Service
+public class UserService {
+
+    private final UserRepository userRepository;
+
+    public UserService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+
+    public Optional<User> getUserById(Long id) {
+        return userRepository.findById(id);
+    }
+}
+✅ This tests debugging, exception handling, and API design.
+
+2. Microservices & AWS Deep Dive (15 min)
+System Design Question
+"We need to integrate a third-party risk estimation service in our insurance platform, but we want to keep it loosely coupled for flexibility. How would you design this?"
+
+Expected Answer:
+Loose Coupling Approach:
+
+Use an API Gateway to route requests to the external service.
+
+Implement a Service Bus/Event-driven approach (SNS, SQS, Kafka) to decouple requests.
+
+Cache responses using Redis to reduce API calls.
+
+Fault Tolerance:
+
+Implement Circuit Breaker (Resilience4J) to prevent cascading failures.
+
+Use Retry mechanisms (Exponential Backoff) for failures.
+
+Security & Cost Optimization:
+
+Use IAM roles & API keys to secure external API access.
+
+Monitor API calls using AWS CloudWatch & Alerts.
+
+✅ This evaluates scalability, fault tolerance, and AWS experience.
+
+3. Adaptability & Learning Ability (10 min)
+Golang Readability Task
+"Here is a small Golang function. Can you explain what it does and how you would modify it?"
+
+go
+Copy
+Edit
+package main
+
+import "fmt"
+
+func add(a, b int) int {
+    return a + b
+}
+
+func main() {
+    sum := add(10, 20)
+    fmt.Println("Sum:", sum)
+}
+Expected Answer:
+✅ Explanation:
+
+This defines a simple add function and calls it in main().
+
+fmt.Println is used to print the result.
+
+✅ Possible Modifications:
+
+Convert add to return multiple values (e.g., sum and error handling).
+
+Use interfaces to make it more extensible.
+
+✅ This checks how quickly they grasp Golang syntax.
+
+4. Culture & Work Approach (10 min)
+Behavioral Questions
+"Tell me about a time you learned a new technology quickly. How did you do it?"
+
+Look for structured learning (tutorials, hands-on projects, documentation reading).
+
+"How do you handle technical debt while balancing speed?"
+
+Expected response: "I identify high-impact areas, propose phased improvements, and ensure minimal disruption to ongoing work."
+
+"What would you do if given an unfamiliar task in Mendix with a tight deadline?"
+
+Expected response: "I would first explore official documentation and examples, then break down the task into manageable steps and ask for guidance if needed."
+
+✅ These evaluate mindset, collaboration, and adaptability.
+
+Final Notes: How to Evaluate
+✅ Technical Depth: Strong Java/AWS skills
+✅ Problem-Solving: Can debug, refactor, and optimize code
+✅ Adaptability: Willingness to learn Golang/Mendix quickly
+✅ Communication & Clarity: Explains well, structured thinking
+✅ Team Fit: Proactive, collaborative mindset
+
